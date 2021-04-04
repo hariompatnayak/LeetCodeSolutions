@@ -1,0 +1,51 @@
+class unionFind
+{
+    int swaps;
+    vector<int> id;
+    public:
+    unionFind(int N) : swaps(0)
+    {
+        id.resize(N);
+        for(int i = 0; i < N; i++) id[i] = i;
+    }
+    int find(int p)
+    {
+        int root = p;
+        while(root != id[root]) root = id[root];
+        while(root != p)
+        {
+            int k = id[p];
+            id[p] = root;
+            p = k;
+        }
+        return root;
+    }
+    void getUnion(int p, int q)
+    {
+        int root1 = find(p);
+        int root2 = find(q);
+        if(root1 == root2) return;
+        swaps++;
+        if(root1 < root2) id[root2] = root1;
+        else id[root1] = root2;
+    }
+    int getSwaps() {return swaps;}
+};
+class Solution {
+public:
+    int minSwapsCouples(vector<int>& row) {
+        int n = row.size() / 2;
+        unionFind obj(n);
+        vector<int> pos(row.size());
+        for(int i = 0; i < row.size()-1; i += 2)
+            pos[row[i]] = pos[row[i+1]] = i / 2;
+        for(int i = 0; i < row.size(); i++)
+        {
+            if(row[i] & 1)
+                obj.getUnion(pos[row[i]], pos[row[i]-1]);
+            else
+                obj.getUnion(pos[row[i]], pos[row[i]+1]);
+        }
+        return obj.getSwaps();
+    }
+};
