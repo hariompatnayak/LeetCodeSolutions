@@ -1,3 +1,7 @@
+/*
+ The edges are created from the pos of 1st element to its partner element pos.
+ If the two pos belong to the same component already, then it does not require any extra swap operation.
+*/
 class unionFind
 {
     int swaps;
