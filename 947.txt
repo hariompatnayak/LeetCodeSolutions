@@ -1,0 +1,93 @@
+typedef unsigned long long ull;
+class unionFind
+{
+    public:
+    vector<int> sz, id;
+    unionFind(int n)
+    {
+        sz.resize(n);
+        id.resize(n);
+        for(int i = 0; i < n; i++)
+        {
+            id[i] = i;
+            sz[i] = 1;
+        }
+    }
+    int find(int p)
+    {
+        int root = id[p];
+        while(root != id[root]) root = id[root];
+        while(root != p)
+        {
+            int k = id[p];
+            id[p] = root;
+            p = k;
+        }
+        return root;
+    }
+    void getUnion(int x, int y)
+    {
+        int root1 = find(x);
+        int root2 = find(y);
+        if(root1 == root2) return;
+        if(sz[root1] < sz[root2])
+        {
+            id[root1] = root2;
+            sz[root2] += sz[root1];
+        }
+        else
+        {
+            id[root2] = root1;
+            sz[root1] += sz[root2];
+        }
+    }
+};
+class Solution {
+public:
+    ull getCoordinateKey(int x, int y)
+    {
+        return ((ull)x << 32) | (ull)y;
+    }
+    int removeStones(vector<vector<int>>& stones) {
+        int nodes = 0;
+        unordered_map<int, vector<int>> rowColMap, colRowMap;
+        unordered_map<ull, int> graphNodeKeyToIdMap;
+        for(int i = 0; i < stones.size(); i++)
+        {
+            int x = stones[i][0], y = stones[i][1];
+            graphNodeKeyToIdMap[getCoordinateKey(x, y)] = nodes++;
+            rowColMap[x].push_back(y);
+            colRowMap[y].push_back(x);
+        }
+        unionFind obj(stones.size());
+        for(const auto& it : rowColMap)
+        {
+            int prev = -1;
+            for(const auto& col : it.second)
+            {
+                int curr = graphNodeKeyToIdMap[getCoordinateKey(it.first, col)];
+                if(prev != -1)
+                    obj.getUnion(prev, curr);
+                prev = curr;
+            }
+        }
+        for(const auto& it : colRowMap)
+        {
+            int prev = -1;
+            for(const auto& row : it.second)
+            {
+                int curr = graphNodeKeyToIdMap[getCoordinateKey(row, it.first)];
+                if(prev != -1)
+                    obj.getUnion(prev, curr);
+                prev = curr;
+            }
+        }
+        int result = 0;
+        for(int i = 0; i < stones.size(); i++)
+        {
+            if(obj.id[i] == i)
+                result += (obj.sz[i] - 1);
+        }
+        return result;
+    }
+};
