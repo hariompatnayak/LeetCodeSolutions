@@ -1,0 +1,87 @@
+class Solution {
+public:
+    void dfsWithMemo(unordered_map<string, vector<string>>& graph, const string& src, const string& dest, vector<vector<string>>& allPaths, unordered_map<string, vector<vector<string>>>& foundPathsMap)
+    {
+        // allPaths contain all paths from src to dest
+        if(foundPathsMap.count(src)) return;
+        if(src == dest)
+        {
+            allPaths.push_back({src});
+            foundPathsMap[src] = allPaths;
+            return;
+        }
+        const auto& neighbors = graph[src];
+        for(const string& s : neighbors)
+        {
+            vector<vector<string>> v;
+            dfsWithMemo(graph, s, dest, v, foundPathsMap);
+            for(const auto& path : foundPathsMap[s])
+            {
+                vector<string> temp;
+                temp.push_back(src);
+                temp.insert(temp.end(), path.begin(), path.end());
+                allPaths.push_back(temp);
+            }
+        }
+        foundPathsMap[src] = allPaths;
+    }  
+    void findNeighbors(string& src, unordered_set<string>& dict, unordered_map<string, int>& getLevelMap, int currLevel, unordered_map<string, vector<string>>& graph)
+    {
+        for(int i = 0; i < src.length(); i++)
+        {
+            for(int j = 0; j < 26; j++)
+            {
+                if(src[i] == (char)(j + 'a')) continue;
+                string dup = src;
+                dup[i] = (char)(j + 'a');
+                if(dict.count(dup))
+                {
+                    if(!getLevelMap.count(dup))
+                        getLevelMap[dup] = currLevel + 1;
+                    if(getLevelMap[dup] > currLevel)
+                        graph[src].push_back(dup);
+                }
+            }
+        }
+    }    
+    void bfs(queue<string>& q, unordered_map<string, int>& getLevelMap, unordered_set<string>& dict, unordered_map<string, vector<string>>& graph, unordered_set<string>& visited)
+    {
+        int currLevel = 0;
+        while(!q.empty())
+        {
+            int levelSize = q.size();
+            while(levelSize)
+            {
+                string& curr = q.front();
+                findNeighbors(curr, dict, getLevelMap, currLevel, graph);
+                for(const auto& neighbor : graph[curr])
+                {
+                    if(!visited.count(neighbor))
+                    {
+                        q.push(neighbor);
+                        visited.insert(neighbor);
+                    }
+                }
+                q.pop();
+                levelSize--;
+            }
+            currLevel++;
+        }
+    }    
+    vector<vector<string>> findLadders(string beginWord, string endWord, vector<string>& wordList) {
+        unordered_set<string> dict(wordList.begin(), wordList.end());
+        if(!dict.count(endWord)) return {};
+        unordered_map<string, vector<string>> graph;
+        unordered_map<string, int> getLevelMap;
+        queue<string> q;
+        q.push(beginWord);
+        getLevelMap[beginWord] = 0;
+        unordered_set<string> visited;
+        visited.insert(beginWord);
+        bfs(q, getLevelMap, dict, graph, visited);
+        vector<vector<string>> allPaths;
+        unordered_map<string, vector<vector<string>>> foundPathsMap;
+        dfsWithMemo(graph, beginWord, endWord, allPaths, foundPathsMap);
+        return allPaths;
+    }
+};
