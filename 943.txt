@@ -1,0 +1,84 @@
+class Solution
+{
+    public:
+        int costAappendB(const string& a, const string& b)
+        {
+            // extra length remaining after b appends to a to form the shortest string
+            int n = b.length(), m = a.length();
+            for(int i = n-1; i > 0; i--)
+            {
+                if(m >= i && b.substr(0, i) == a.substr(m-i)) return n-i;
+            }
+            return n;
+        }
+        string shortestSuperstring(vector<string>& words) {
+            int n = words.size();
+            int graph[n][n];
+            for(int i = 0; i < n; i++)
+            {
+                graph[i][i] = 0;
+                for(int j = i+1; j < n; j++)
+                {
+                    graph[i][j] = costAappendB(words[i], words[j]);
+                    graph[j][i] = costAappendB(words[j], words[i]);
+                }
+            }
+            // dp[i][j] : min cost reaching j covering set i
+            vector<vector<int>> dp(1<<n, vector<int>(n, INT_MAX));
+            vector<vector<int>> path(1<<n, vector<int>(n, -1));
+            int minVal = INT_MAX, last = -1;
+            for(int i = 1; i < (1<<n); i++)
+            {
+                for(int j = 0; j < n; j++)
+                {
+                    if(i & (1 << j))
+                    {
+                        int mask = i ^ (1 << j);
+                        if(!mask)
+                        {
+                            dp[i][j] = words[j].length();
+                            path[i][j] = j;
+                        }
+                        else
+                        {
+                            for(int k = 0; k < n; k++) 
+                            {
+                                if(mask & (1 << k))
+                                {
+                                    if(dp[mask][k] != INT_MAX && (dp[mask][k] + graph[k][j]) < dp[i][j])
+                                    {
+                                        dp[i][j] = dp[mask][k] + graph[k][j];
+                                        path[i][j] = k;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if((i == (1<<n) - 1) && dp[i][j] < minVal)
+                    {
+                        minVal = dp[i][j];
+                        last = j;
+                    }
+                }
+            }
+            int mask = (1 << n) - 1;
+            vector<int> trajectory;
+            int curr;
+            while(mask)
+            {
+                trajectory.push_back(last);
+                curr = last;
+                last = path[mask][last];
+                mask ^= (1 << curr);
+            }
+            reverse(trajectory.begin(), trajectory.end());
+            string result = words[trajectory[0]];
+            for(int i = 1; i < trajectory.size(); i++)
+            {
+                last = trajectory[i];
+                int extra = graph[trajectory[i-1]][last];
+                result += words[last].substr(words[last].length()-extra);
+            }
+            return result;
+        }            
+};
