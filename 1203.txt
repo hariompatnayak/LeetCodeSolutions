@@ -1,0 +1,50 @@
+class Solution {
+public:
+    bool dfs(int curr, int n, int& iter, vector<int>& items, vector<vector<int>>& adj, vector<bool>& visited, vector<bool>& inStack)
+    {
+        visited[curr] = true;
+        inStack[curr] = true;
+        for(int j = 0, neighbor = 0; j < adj[curr].size(); j++)
+        {
+            neighbor = adj[curr][j];
+            if(inStack[neighbor]) return false;
+            if(!visited[neighbor] && !dfs(neighbor, n, iter, items, adj, visited, inStack)) return false;
+        }
+        inStack[curr] = false;
+        items[iter--] = curr;
+        return true;
+    }
+    vector<int> sortItems(int n, int m, vector<int>& group, vector<vector<int>>& beforeItems) {
+        // idea is to assign group IDs  beyond m to those not belonging to any group
+        int grps = m;
+        for(int i = 0; i < n; i++) if(group[i] == -1) group[i] = grps++;
+        vector<vector<int>> adj(n), grpAdj(grps);
+        for(int i = 0; i < beforeItems.size(); i++)
+            for(int j = 0 ; j < beforeItems[i].size(); j++)
+            {
+                adj[beforeItems[i][j]].push_back(i);
+                if(group[beforeItems[i][j]] != group[i]) grpAdj[group[beforeItems[i][j]]].push_back(group[i]);
+            }
+        vector<bool> visited(n), inStack(n);
+        vector<int> items(n);
+        int iter = n-1;
+        bool status = true;
+        for(int i = 0; i < n; i++)
+            if(!visited[i] && !dfs(i, n, iter, items, adj, visited, inStack)) {status = false; break;}
+        if(!status) return {};
+        vector<int> grpOrder(grps);
+        visited.clear(), inStack.clear(), visited.resize(grps), inStack.resize(grps), iter = grps-1;
+        for(int i = 0; i < grps; i++)
+            if(!visited[i] && !dfs(i, grps, iter, grpOrder, grpAdj, visited, inStack)) {status = false; break;}
+        if(!status) return {};
+        vector<vector<int>> grpToItems(grps);
+        for(int i = 0; i < n; i++) grpToItems[group[items[i]]].push_back(items[i]);
+        for(int i = 0, k = 0; i < grps; i++)
+        {
+            int grp = grpOrder[i];
+            for(int j = 0; j < grpToItems[grp].size(); j++)
+                items[k++] = grpToItems[grp][j];
+        }
+        return items;
+    }
+};
